@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>税务师智能刷题系统</title>
+    <style>
+        /* 新增样式 */
+        .menu-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .menu-btn {
+            background: #2B6DE5;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            font-size: 14px;
+        }
+        .wrong-list {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .wrong-item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>税务师备考刷题</h2>
+        <div class="menu-bar">
+            <button class="menu-btn" onclick="generatePaper()">智能组卷</button>
+            <button class="menu-btn" onclick="showWrongList()">错题本</button>
+        </div>
+        <div class="progress">当前进度：<span id="progress">0/0</span></div>
+    </div>
+    
+    <div id="questionContainer"></div>
+    
+    <button onclick="nextQuestion()">下一题</button>
+
+<script>
+// 完整题库（示例结构，需填充真实100题）
+const fullQuestions = [/* 包含100道题的数组 */];
+
+// 运行时数据
+let generatedPaper = [];  // 当前试卷
+let currentIndex = 0;
+let userAnswers = [];
+let wrongQuestions = JSON.parse(localStorage.getItem('wrongQuestions')) || [];
+
+// 智能组卷功能
+function generatePaper() {
+    // 随机选题算法
+    const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+    generatedPaper = shuffle(fullQuestions).slice(0, 5);
+    
+    // 重置状态
+    currentIndex = 0;
+    userAnswers = [];
+    wrongQuestions = JSON.parse(localStorage.getItem('wrongQuestions')) || [];
+    
+    renderQuestion();
+    alert("已生成新试卷（5题）");
+}
+
+// 错题本功能
+function showWrongList() {
+    const html = `
+        <div class="wrong-list">
+            <h3>错题本（${wrongQuestions.length}题）</h3>
+            ${wrongQuestions.map((q, i) => `
+                <div class="wrong-item">
+                    <p>${i+1}. ${q.question}</p>
+                    <p style="color:#666">正确答案：${q.options.filter((_,idx)=>q.answer.includes(idx)).join(', ')}</p>
+                    <button onclick="reviewQuestion(${i})">重做本题</button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    document.getElementById('questionContainer').innerHTML = html;
+    document.querySelector('button').style.display = 'none';
+}
+
+// 重做错题
+function reviewQuestion(index) {
+    generatedPaper = [wrongQuestions[index]];
+    currentIndex = 0;
+    userAnswers = [];
+    renderQuestion();
+}
+
+// 修改原有renderQuestion函数
+function renderQuestion() {
+    const q = generatedPaper[currentIndex];
+    // ...保持原有渲染逻辑不变...
+}
+
+// 修改答案判断逻辑
+function checkAnswer() {
+    const q = generatedPaper[currentIndex];
+    const isCorrect = JSON.stringify(q.answer.sort()) === 
+                    JSON.stringify(userAnswers[currentIndex]?.sort());
+    
+    // 记录错题
+    if(!isCorrect && !wrongQuestions.some(wq => wq.question === q.question)) {
+        wrongQuestions.push(q);
+        localStorage.setItem('wrongQuestions', JSON.stringify(wrongQuestions));
+    }
+}
+
+// 修改下一题逻辑
+function nextQuestion() {
+    checkAnswer();
+    if(currentIndex < generatedPaper.length-1) {
+        currentIndex++;
+        renderQuestion();
+    } else {
+        showSummary();
+    }
+}
+
+// 初始化时自动组卷
+generatePaper();
+</script>
+</body>
+</html>
