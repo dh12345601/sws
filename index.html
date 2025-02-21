@@ -1,135 +1,275 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>税务师智能刷题系统</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>税务师15题测试</title>
     <style>
-        /* 新增样式 */
-        .menu-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+            background-color: #f8f9fa;
         }
-        .menu-btn {
-            background: #2B6DE5;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: none;
-            font-size: 14px;
-        }
-        .wrong-list {
+        .question-container {
+            display: none;
+            margin-bottom: 20px;
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 10px;
-            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .wrong-item {
+        .active {
+            display: block;
+        }
+        .options {
+            margin: 15px 0;
+        }
+        .option {
             margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #eee;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            outline: none;
+        }
+        .option:hover {
+            background-color: #f5f5f5;
+        }
+        .correct {
+            background-color: #e8f5e9 !important;
+            border-color: #4caf50 !important;
+        }
+        .wrong {
+            background-color: #ffebee !important;
+            border-color: #f44336 !important;
+        }
+        .explanation {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f3f9ff;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+        }
+        #progress {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        #result {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        #score {
+            font-size: 36px;
+            color: #2196f3;
+            margin: 10px 0;
+            display: block;
+        }
+        button {
+            padding: 10px 25px;
+            margin: 10px 5px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            outline: none;
+        }
+        button:hover {
+            background-color: #1976d2;
+        }
+        button:disabled {
+            background-color: #bdbdbd;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h2>税务师备考刷题</h2>
-        <div class="menu-bar">
-            <button class="menu-btn" onclick="generatePaper()">智能组卷</button>
-            <button class="menu-btn" onclick="showWrongList()">错题本</button>
-        </div>
-        <div class="progress">当前进度：<span id="progress">0/0</span></div>
+    <div id="progress">📝 题目 1/15</div>
+    <div id="questions"></div>
+    <div id="result" style="display: none;">
+        <h2>🎉 测试完成！</h2>
+        <p>您的得分是：<span id="score">0</span>/15 分</p>
+        <button onclick="location.reload()">重新挑战</button>
     </div>
-    
-    <div id="questionContainer"></div>
-    
-    <button onclick="nextQuestion()">下一题</button>
 
 <script>
-// 完整题库（示例结构，需填充真实100题）
-const fullQuestions = [/* 包含100道题的数组 */];
-
-// 运行时数据
-let generatedPaper = [];  // 当前试卷
-let currentIndex = 0;
-let userAnswers = [];
-let wrongQuestions = JSON.parse(localStorage.getItem('wrongQuestions')) || [];
-
-// 智能组卷功能
-function generatePaper() {
-    // 随机选题算法
-    const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
-    generatedPaper = shuffle(fullQuestions).slice(0, 5);
-    
-    // 重置状态
-    currentIndex = 0;
-    userAnswers = [];
-    wrongQuestions = JSON.parse(localStorage.getItem('wrongQuestions')) || [];
-    
-    renderQuestion();
-    alert("已生成新试卷（5题）");
-}
-
-// 错题本功能
-function showWrongList() {
-    const html = `
-        <div class="wrong-list">
-            <h3>错题本（${wrongQuestions.length}题）</h3>
-            ${wrongQuestions.map((q, i) => `
-                <div class="wrong-item">
-                    <p>${i+1}. ${q.question}</p>
-                    <p style="color:#666">正确答案：${q.options.filter((_,idx)=>q.answer.includes(idx)).join(', ')}</p>
-                    <button onclick="reviewQuestion(${i})">重做本题</button>
-                </div>
-            `).join('')}
-        </div>
-    `;
-    document.getElementById('questionContainer').innerHTML = html;
-    document.querySelector('button').style.display = 'none';
-}
-
-// 重做错题
-function reviewQuestion(index) {
-    generatedPaper = [wrongQuestions[index]];
-    currentIndex = 0;
-    userAnswers = [];
-    renderQuestion();
-}
-
-// 修改原有renderQuestion函数
-function renderQuestion() {
-    const q = generatedPaper[currentIndex];
-    // ...保持原有渲染逻辑不变...
-}
-
-// 修改答案判断逻辑
-function checkAnswer() {
-    const q = generatedPaper[currentIndex];
-    const isCorrect = JSON.stringify(q.answer.sort()) === 
-                    JSON.stringify(userAnswers[currentIndex]?.sort());
-    
-    // 记录错题
-    if(!isCorrect && !wrongQuestions.some(wq => wq.question === q.question)) {
-        wrongQuestions.push(q);
-        localStorage.setItem('wrongQuestions', JSON.stringify(wrongQuestions));
+const questions = [
+    {
+        question: "增值税视同销售行为是：",
+        options: ["A. 外购货物用于集体福利", "B. 自产货物用于在建工程", "C. 委托加工货物对外投资", "D. 外购货物用于非应税项目"],
+        answer: 2,
+        explanation: "《增值税暂行条例实施细则》第四条：将自产、委托加工或购进的货物用于投资、分配、无偿赠送视同销售。"
+    },
+    {
+        question: "企业所得税准予扣除的支出：",
+        options: ["A. 税收滞纳金", "B. 非广告赞助", "C. 财产保险费", "D. 未核定准备金"],
+        answer: 2,
+        explanation: "《企业所得税法》第八条：合理支出可扣除，财产保险属于经营相关支出。"
+    },
+    {
+        question: "从量定额征收消费税的消费品：",
+        options: ["A. 高档手表", "B. 汽油", "C. 小汽车", "D. 卷烟"],
+        answer: 1,
+        explanation: "成品油类（汽油/柴油）采用从量定额计征方式。"
+    },
+    {
+        question: "税收保全措施适用对象：",
+        options: ["A. 生产、经营纳税人", "B. 所有纳税人", "C. 扣缴义务人", "D. 纳税担保人"],
+        answer: 0,
+        explanation: "《税收征收管理法》第三十八条：适用于从事生产、经营的纳税人。"
+    },
+    {
+        question: "赡养老人专项扣除标准：",
+        options: ["A. 1000元/月", "B. 2000元/月", "C. 3000元/月", "D. 4000元/月"],
+        answer: 1,
+        explanation: "独生子女赡养60岁以上父母，每月可扣除2000元。"
+    },
+    {
+        question: "房产税从价计征依据：",
+        options: ["A. 房产原值", "B. 房产净值", "C. 原值减除10%-30%", "D. 市场评估价"],
+        answer: 2,
+        explanation: "《房产税暂行条例》：按原值一次减除10%-30%后的余值计算。"
+    },
+    {
+        question: "税收强制执行措施：",
+        options: ["A. 查封商品", "B. 冻结存款", "C. 拍卖扣押商品", "D. 责令担保"],
+        answer: 2,
+        explanation: "《税收征收管理法》第四十条：拍卖、变卖属强制执行措施。"
+    },
+    {
+        question: "不同计算期投资决策方法：",
+        options: ["A. 净现值法", "B. 年等额净回收法", "C. 投资回收期法", "D. 差额收益率法"],
+        answer: 1,
+        explanation: "年等额净回收法适用于不同计算期的项目比较。"
+    },
+    {
+        question: "企业所得税纳税地点：",
+        options: ["A. 居民企业汇总纳税", "B. 非居民以扣缴地为准", "C. 非居民可汇总", "D. 合并纳税"],
+        answer: 0,
+        explanation: "居民企业分支机构需汇总纳税，非居民企业按机构场所或扣缴地纳税。"
+    },
+    {
+        question: "境外中资企业税务管辖：",
+        options: ["A. 实际管理机构地", "B. 控股股东地", "C. 税务机关指定", "D. 企业自选"],
+        answer: 0,
+        explanation: "《境外中资控股居民企业所得税管理办法》以实际管理机构所在地为准。"
+    },
+    {
+        question: "核定征收不包括：",
+        options: ["A. 按收入核定", "B. 按原材料推算", "C. 按上期税款", "D. 参照同类税负"],
+        answer: 2,
+        explanation: "核定方法不得直接按上期税款核定。"
+    },
+    {
+        question: "债券发行价格计算（票面6%，市场8%）：",
+        options: ["A. 55.96万", "B. 56.02万", "C. 58.22万", "D. 60.00万"],
+        answer: 0,
+        explanation: "折价发行计算：60×0.7307 + 1.8×6.7327 ≈ 55.96万元。"
+    },
+    {
+        question: "卖方融资特点：",
+        options: ["A. 分期支付", "B. 现金支付", "C. 杠杆收购", "D. 混合支付"],
+        answer: 0,
+        explanation: "卖方融资指分期支付并购价款。"
+    },
+    {
+        question: "设备年折旧额计算：",
+        options: ["A. 9万", "B. 10万", "C. 11万", "D. 12万"],
+        answer: 0,
+        explanation: "年限平均法：（50-5）÷5=9万元。"
+    },
+    {
+        question: "卖设备现金流量影响：",
+        options: ["A. 减少360元", "B. 减少1200元", "C. 增加9640元", "D. 增加10300元"],
+        answer: 3,
+        explanation: "现金流量=10000-(10000-11200)×25%=10300元。"
     }
+];
+
+let currentQuestion = 0;
+let score = 0;
+
+function init() {
+    const container = document.getElementById('questions');
+    questions.forEach((q, index) => {
+        const div = document.createElement('div');
+        div.className = 'question-container';
+        div.innerHTML = `
+            <h3>${index + 1}. ${q.question}</h3>
+            <div class="options">
+                ${q.options.map((o, i) => `
+                    <div class="option" onclick="selectAnswer(${index}, ${i})">${o}</div>
+                `).join('')}
+            </div>
+            <div class="explanation" id="explain-${index}"></div>
+            <div style="margin-top:20px;">
+                <button onclick="prevQuestion()" ${index === 0 ? 'disabled' : ''}>← 上一题</button>
+                <button onclick="nextQuestion()" style="float:right">
+                    ${index === questions.length-1 ? '提交结果' : '下一题 →'}
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+    showQuestion(currentQuestion);
 }
 
-// 修改下一题逻辑
+function showQuestion(n) {
+    document.querySelectorAll('.question-container').forEach(div => div.classList.remove('active'));
+    document.querySelectorAll('.question-container')[n].classList.add('active');
+    document.getElementById('progress').textContent = `📝 题目 ${n + 1}/${questions.length}`;
+}
+
+function selectAnswer(qIndex, optionIndex) {
+    const questionDiv = document.querySelector(`.question-container:nth-child(${qIndex + 1})`);
+    const options = questionDiv.querySelectorAll('.option');
+    
+    options.forEach((opt, i) => {
+        opt.classList.remove('correct', 'wrong');
+        if(i === questions[qIndex].answer) opt.classList.add('correct');
+        if(i === optionIndex && i !== questions[qIndex].answer) opt.classList.add('wrong');
+    });
+
+    if(optionIndex === questions[qIndex].answer && !questions[qIndex].answered) {
+        score++;
+        questions[qIndex].answered = true;
+    }
+    
+    questionDiv.querySelector('.explanation').innerHTML = 
+        `<strong>📚 解析：</strong>${questions[qIndex].explanation}`;
+}
+
 function nextQuestion() {
-    checkAnswer();
-    if(currentIndex < generatedPaper.length-1) {
-        currentIndex++;
-        renderQuestion();
+    if(currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        showQuestion(currentQuestion);
     } else {
-        showSummary();
+        document.getElementById('questions').style.display = 'none';
+        document.getElementById('progress').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('score').textContent = score;
     }
 }
 
-// 初始化时自动组卷
-generatePaper();
+function prevQuestion() {
+    if(currentQuestion > 0) {
+        currentQuestion--;
+        showQuestion(currentQuestion);
+    }
+}
+
+// 自动初始化
+init();
 </script>
 </body>
 </html>
